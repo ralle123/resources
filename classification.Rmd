@@ -1,0 +1,80 @@
+---
+title: "classification"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+where9am <- read_csv("https://assets.datacamp.com/production/course_2906/datasets/locations.csv")
+#where9am <- read_csv("where9am.csv")
+head(where9am)
+```
+
+## calculating naive bayes
+
+P(A | B) = \frac{P(A\, {\rm and}\, B)}{P(B)}
+
+```{r , echo=FALSE}
+# Compute P(A) 
+p_A <- nrow(subset(where9am,location=="office"))/nrow(where9am)
+p_A
+# Compute P(B)
+p_B <- nrow(subset(where9am,daytype=="weekday"))/nrow(where9am)
+
+# Compute the observed P(A and B)
+p_AB <- nrow(subset(where9am,location=="office" & daytype=="weekday"))/nrow(where9am)
+
+# Compute P(A | B) and print its value
+p_A_given_B <- p_AB / p_B
+
+p_A_given_B
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r, results='hide'}
+
+thursday9am <- where9am %>%
+  filter(weekday == "thursday") 
+
+saturday9am <- where9am %>%
+  filter(weekday == "saturday")
+
+# Load the naivebayes package
+#install.packages("naivebayes")
+library(naivebayes)
+
+# Build the location prediction model
+locmodel <- naive_bayes(location ~ daytype, data = where9am)
+
+# Predict Thursday's 9am location
+predict(locmodel, thursday9am)
+
+# Predict Saturdays's 9am location
+predict(locmodel, saturday9am)
+
+locmodel
+# Obtain the predicted probabilities for Thursday at 9am
+predict(locmodel, thursday9am , type = "prob")
+# Obtain the predicted probabilities for Saturday at 9am
+predict(locmodel, saturday9am, type = "prob")
+```
+```{r}
+locations <- location
+
+weekday_afternoon <- locations %>%
+  filter(daytype == "weekday", hourtype == "afternoon")
+
+weekday_evening <- locations %>%
+  filter(daytype == "weekday", hourtype == "evening")
+```
+

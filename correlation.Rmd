@@ -1,0 +1,104 @@
+---
+title: "Correlation & linear regresion"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+if(!require("openintro")){
+  install.packages("openintro")
+  library(openintro)
+}
+library(ggplot2)
+data(ncbirths)
+data(mammals)
+library(dplyr)
+```
+
+## R Markdown
+
+Practice on correlation example
+
+```{r ncbirths}
+summary(ncbirths)
+```
+
+## Including Plots
+
+
+```{r scatter, echo=FALSE}
+# Scatterplot of weight vs. weeks
+ggplot(data = ncbirths, aes(x = weeks, y = weight)) + geom_point()
+ggplot(data = ncbirths, 
+       aes(x = cut(weeks, breaks = 5), y = weight)) + 
+  geom_boxplot()
+```
+
+## R Markdown
+
+Difference in log10 call to graph
+```{r}
+# Scatterplot with coord_trans()
+ggplot(data = mammals, aes(x = BodyWt, y = BrainWt)) +
+  geom_point() + 
+  coord_trans(x = "log10", y = "log10")
+
+# Scatterplot with scale_x_log10() and scale_y_log10()
+ggplot(data = mammals, aes(x = BodyWt, y = BrainWt)) +
+  geom_point() +
+  scale_x_log10() + scale_y_log10()
+```
+```{r}
+# Compute correlation
+ncbirths %>%
+  summarize(N = n(), r = cor(weight, mage))
+
+# Compute correlation for all non-missing pairs
+ncbirths %>%
+  summarize(N = n(), r = cor(weight, weeks, use = "pairwise.complete.obs"))
+```
+```{r}
+# Scatterplot with coord_trans()
+ggplot(data = mammals, aes(x = BodyWt, y = BrainWt)) +
+  geom_point() + 
+  geom_smooth(method = "lm")
+```
+```{r}
+# Log-linear model for body weight as a function of brain weight
+mod <- lm(log(BodyWt) ~ log(BrainWt), data = mammals)
+coef(mod)
+summary(mod)
+#y^ values
+fitted.values(mod)
+#residuals is difference between expected and obtained values
+residuals(mod)
+library(broom)
+augment(mod)
+```
+```{r}
+# Compute RMSE - standard deviation of the residuals (prediction errors).
+sqrt(sum(residuals(mod)^2) / df.residual(mod))
+
+#bdims_tidy %>%
+#  summarize(var_y = var(wgt), var_e = var(.resid)) %>%
+#  mutate(R_squared = 1- var_e/var_y)
+
+# Rank points of high leverage
+#The augment() function produces the extent of leverage under .hat
+mod %>%
+  augment() %>%
+  arrange(desc(.hat)) %>%
+  head()
+# Rank influential points
+#The augment() function produces the extent of leverage under .cooksd
+mod %>%
+  augment() %>%
+  arrange(desc(.cooksd)) %>%
+  head()
+
+# Rank high leverage points
+mod %>% augment() %>%
+arrange(desc(.hat),.cooksd) %>%
+head()
+```
+
